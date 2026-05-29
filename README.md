@@ -63,31 +63,59 @@ uv run python -m panel_next --image examples/base.png --vision-model your-vl-mod
 
 ## Usage
 
-Full pipeline:
+Full pipeline with continuity controls:
 
 ```bash
 uv run python -m panel_next \
-  --image examples/base.png \
+  --image data/base.png \
+  --out outputs/next_panel.json \
+  --comfyui-dir outputs/comfyui_prompts \
   --intent "Make the next panel a natural surprised look-back beat." \
-  --out outputs/next_panel.json
+  --character "same main character, preserve the established character concept" \
+  --background "preserve the current location, lighting, and background atmosphere" \
+  --fixed "same hairstyle" \
+  --fixed "same outfit" \
+  --fixed "same important accessories" \
+  --allowed "facial expression" \
+  --allowed "head direction" \
+  --allowed "camera angle" \
+  --avoid "different character" \
+  --avoid "different outfit" \
+  --avoid "different hairstyle" \
+  --avoid "extra limbs" \
+  --candidates 3
 ```
 
 PowerShell uses a backtick for line continuation, not `\`:
 
 ```powershell
 uv run python -m panel_next `
-  --image examples/base.png `
+  --image data\base.png `
+  --out outputs\next_panel.json `
+  --comfyui-dir outputs\comfyui_prompts `
   --intent "Make the next panel a natural surprised look-back beat." `
-  --out outputs/next_panel.json
+  --character "same main character, preserve the established character concept" `
+  --background "preserve the current location, lighting, and background atmosphere" `
+  --fixed "same hairstyle" `
+  --fixed "same outfit" `
+  --fixed "same important accessories" `
+  --allowed "facial expression" `
+  --allowed "head direction" `
+  --allowed "camera angle" `
+  --avoid "different character" `
+  --avoid "different outfit" `
+  --avoid "different hairstyle" `
+  --avoid "extra limbs" `
+  --candidates 3
 ```
 
 You can also run it as a single line:
 
 ```powershell
-uv run python -m panel_next --image examples/base.png --intent "Make the next panel a natural surprised look-back beat." --out outputs/next_panel.json
+uv run python -m panel_next --image data\base.png --out outputs\next_panel.json --comfyui-dir outputs\comfyui_prompts --intent "Make the next panel a natural surprised look-back beat." --character "same main character, preserve the established character concept" --background "preserve the current location, lighting, and background atmosphere" --fixed "same hairstyle" --fixed "same outfit" --fixed "same important accessories" --allowed "facial expression" --allowed "head direction" --allowed "camera angle" --avoid "different character" --avoid "different outfit" --avoid "different hairstyle" --avoid "extra limbs" --candidates 3
 ```
 
-With explicit continuity controls:
+Example with concrete continuity controls:
 
 ```bash
 uv run python -m panel_next \
