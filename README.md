@@ -200,6 +200,7 @@ uv run python -m panel_next \
 - `--ollama-url`: Ollama API URL. Default: `http://localhost:11434`.
 - `--candidates`: number of next-panel candidates. Default: `3`.
 - `--mode`: `observe`, `plan`, or `full`. Default: `full`.
+- `--no-print-prompts`: do not print copy-paste positive/negative prompts to the terminal.
 - `--debug`: print intermediate paths and JSON.
 
 ## Output JSON Example
@@ -304,6 +305,32 @@ The output JSON contains `next_panels[].comfyui_prompt`, which is intended to be
 3. screen effects
 4. situation
 5. objects, props, and background details
+
+The CLI also prints progress messages while it is running:
+
+```text
+[panel-next] accepted mode=full image=data\Gy_iDapboAAbPrZ.jpg
+[panel-next] observing image with vision model: huihui_ai/qwen3-vl-abliterated:8b
+[panel-next] observation saved: outputs\image_observation.json
+[panel-next] planning 3 next panel candidate(s): huihui_ai/qwen3-abliterated:8b
+[panel-next] plan saved: outputs\next_panel.json
+```
+
+After planning, it prints copy-paste prompt blocks to the terminal:
+
+```text
+=== Candidate 1: reaction shot ===
+POSITIVE:
+same character, same outfit, same hairstyle, continuity from source image
+medium close-up, slight low angle, looking back over shoulder
+soft rim light, subtle motion emphasis, clean anime linework
+the character notices something behind her and turns with controlled surprise
+preserve visible accessories, background elements, and important props from the source image
+NEGATIVE:
+different character, different outfit, extra limbs, distorted hands, low quality
+```
+
+Use `--no-print-prompts` if you only want the JSON and optional `--comfyui-dir` text files.
 
 To print only the copy-paste prompts and negative prompts:
 

@@ -8,7 +8,14 @@ from pathlib import Path
 from .context import build_continuity_control
 from .image_io import ImageInputError
 from .ollama_client import OllamaError
-from .pipeline import PipelineConfig, print_summary, run_full, run_observe, run_plan
+from .ollama_client import OllamaClient
+from .pipeline import (
+    PipelineConfig,
+    print_prompt_blocks,
+    print_summary,
+    run_observe,
+    run_plan,
+)
 
 
 DEFAULT_TEXT_MODEL = "huihui_ai/qwen3-abliterated:8b"
@@ -106,6 +113,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="full",
         help="Run observe only, plan only, or full pipeline. Default: full",
     )
+    parser.add_argument(
+        "--no-print-prompts",
+        action="store_true",
+        help="Do not print copy-paste positive/negative prompts to the terminal.",
+    )
     parser.add_argument("--debug", action="store_true", help="Print intermediate results.")
     return parser
 
@@ -138,21 +150,45 @@ def main(argv: list[str] | None = None) -> int:
             comfyui_dir=Path(args.comfyui_dir) if args.comfyui_dir else None,
             debug=args.debug,
         )
-        if args.mode == "observe":
-            result = run_observe(config)
-        elif args.mode == "plan":
-            result = run_plan(config)
-        else:
-            result = run_full(config)
+        result = _run_with_progress(args.mode, config)
         if args.debug:
             print(f"Mode: {args.mode}")
             print(f"Observation path: {config.observation}")
             print(f"Output path: {config.out}")
             print(json.dumps(result, ensure_ascii=False, indent=2))
         print_summary(result, args.mode)
+        if args.mode != "observe" and not args.no_print_prompts:
+            print_prompt_blocks(result)
         if args.mode != "observe" and config.comfyui_dir is not None:
             print(f"ComfyUI prompt files saved to: {config.comfyui_dir}")
     except (ImageInputError, FileNotFoundError, ValueError, OllamaError) as exc:
         print(f"panel-next error: {exc}", file=sys.stderr)
         return 1
     return 0
+
+
+def _run_with_progress(mode: str, config: PipelineConfig):
+    _progress(f"accepted mode={mode} image={config.image}")
+    if mode == "observe":
+        _progress(f"observing image with vision model: {config.vision_model}")
+        result = run_observe(config)
+        _progress(f"observation saved: {config.observation}")
+        return result
+    if mode == "plan":
+        _progress(f"planning next panels with text model: {config.text_model}")
+        result = run_plan(config)
+        _progress(f"plan saved: {config.out}")
+        return result
+
+    client = OllamaClient(config.ollama_url)
+    _progress(f"observing image with vision model: {config.vision_model}")
+    observation = run_observe(config, client=client)
+    _progress(f"observation saved: {config.observation}")
+    _progress(f"planning {config.candidates} next panel candidate(s): {config.text_model}")
+    result = run_plan(config, image_observation=observation, client=client)
+    _progress(f"plan saved: {config.out}")
+    return result
+
+
+def _progress(message: str) -> None:
+    print(f"[panel-next] {message}", file=sys.stderr, flush=True)

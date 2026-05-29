@@ -108,6 +108,23 @@ def print_summary(output: PanelNextOutput | dict[str, Any], mode: str) -> None:
         print(f"- #{panel_id}: {purpose} / {camera}")
 
 
+def print_prompt_blocks(output: PanelNextOutput | dict[str, Any]) -> None:
+    panels = output.get("next_panels", [])
+    if not panels:
+        return
+    print()
+    print("Copy-paste prompts:")
+    for panel in panels:
+        panel_id = panel.get("panel_id", "?")
+        purpose = panel.get("purpose", "")
+        print()
+        print(f"=== Candidate {panel_id}: {purpose} ===")
+        print("POSITIVE:")
+        print(str(panel.get("comfyui_prompt", "")).strip())
+        print("NEGATIVE:")
+        print(str(panel.get("negative_prompt", "")).strip())
+
+
 def _parse_or_save_debug(raw_response: str, label: str) -> Any:
     try:
         return extract_json_from_response(raw_response)
