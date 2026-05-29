@@ -7,7 +7,7 @@ from typing import Any
 
 from .image_io import encode_image_base64, validate_image_path
 from .ollama_client import OllamaClient
-from .prompt_formatting import ensure_comfyui_prompts
+from .prompt_formatting import ensure_comfyui_prompts, write_comfyui_prompt_files
 from .prompts import build_next_panel_messages, build_vision_messages
 from .schemas import (
     ContinuityControl,
@@ -33,6 +33,7 @@ class PipelineConfig:
     ollama_url: str
     candidates: int
     continuity_control: ContinuityControl
+    comfyui_dir: Path | None = None
     debug: bool = False
 
 
@@ -81,6 +82,8 @@ def run_plan(
     }
     validated = validate_panel_next_output(output)
     _write_json(config.out, validated)
+    if config.comfyui_dir is not None:
+        write_comfyui_prompt_files(config.comfyui_dir, validated["next_panels"])
     return validated
 
 

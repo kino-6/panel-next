@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 
@@ -113,3 +114,47 @@ def join_prompt_sections(sections: dict[str, str]) -> str:
         for key in PROMPT_SECTION_ORDER
         if isinstance(sections.get(key), str) and sections[key].strip()
     )
+
+
+def write_comfyui_prompt_files(
+    output_dir: Path,
+    panels: list[dict[str, Any]],
+) -> list[Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    for index, panel in enumerate(panels, start=1):
+        panel_id = int(panel.get("panel_id") or index)
+        prefix = f"candidate_{panel_id:02d}"
+        positive_path = output_dir / f"{prefix}_positive.txt"
+        negative_path = output_dir / f"{prefix}_negative.txt"
+        sections_path = output_dir / f"{prefix}_sections.txt"
+
+        _write_windows_text(positive_path, str(panel.get("comfyui_prompt", "")))
+        _write_windows_text(negative_path, str(panel.get("negative_prompt", "")))
+        _write_windows_text(
+            sections_path,
+            _format_sections(panel.get("prompt_sections", {})),
+        )
+        written.extend([positive_path, negative_path, sections_path])
+    return written
+
+
+def _format_sections(sections: Any) -> str:
+    if not isinstance(sections, dict):
+        return ""
+    lines = []
+    for key in PROMPT_SECTION_ORDER:
+        value = sections.get(key)
+        if isinstance(value, str) and value.strip():
+            lines.append(f"[{key}]")
+            lines.append(value.strip())
+            lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _write_windows_text(path: Path, text: str) -> None:
+    normalized = "\r\n".join(text.splitlines()).strip()
+    if normalized:
+        normalized += "\r\n"
+    with path.open("w", encoding="utf-8", newline="") as file:
+        file.write(normalized)

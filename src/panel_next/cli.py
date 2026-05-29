@@ -64,6 +64,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output JSON path. Default: outputs/next_panel.json",
     )
     parser.add_argument(
+        "--comfyui-dir",
+        default=None,
+        help=(
+            "Optional directory for Windows-friendly ComfyUI prompt text files "
+            "(positive, negative, and section files per candidate)."
+        ),
+    )
+    parser.add_argument(
         "--observation",
         default="outputs/image_observation.json",
         help=(
@@ -127,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
             ollama_url=args.ollama_url,
             candidates=args.candidates,
             continuity_control=continuity_control,
+            comfyui_dir=Path(args.comfyui_dir) if args.comfyui_dir else None,
             debug=args.debug,
         )
         if args.mode == "observe":
@@ -141,6 +150,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Output path: {config.out}")
             print(json.dumps(result, ensure_ascii=False, indent=2))
         print_summary(result, args.mode)
+        if args.mode != "observe" and config.comfyui_dir is not None:
+            print(f"ComfyUI prompt files saved to: {config.comfyui_dir}")
     except (ImageInputError, FileNotFoundError, ValueError, OllamaError) as exc:
         print(f"panel-next error: {exc}", file=sys.stderr)
         return 1

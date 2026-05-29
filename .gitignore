@@ -1,5 +1,6 @@
 data/
 outputs/*.json
+outputs/**/*.txt
 outputs/debug_last_response.txt
 !outputs/.gitkeep
 

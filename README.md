@@ -185,6 +185,7 @@ python -m panel_next \
 - `--avoid`: forbidden change or detail to avoid. Can be passed multiple times.
 - `--context-file`: JSON file containing continuity controls.
 - `--out`: output JSON path. Default: `outputs/next_panel.json`.
+- `--comfyui-dir`: optional directory for ComfyUI prompt text files. Writes positive, negative, and section files per candidate with Windows-friendly CRLF line endings.
 - `--observation`: observation JSON path. Default: `outputs/image_observation.json`.
 - `--vision-model`: Ollama vision model. Default: `huihui_ai/qwen3-vl-abliterated:8b`.
 - `--text-model`: Ollama text model. Default: `huihui_ai/qwen3-abliterated:8b`.
@@ -246,6 +247,7 @@ The following is the same workflow used during local validation. Put a base imag
 uv run python -m panel_next \
   --image data/Gy_iDapboAAbPrZ.jpg \
   --out outputs/comfyui_prompt_run.json \
+  --comfyui-dir outputs/comfyui_prompts \
   --intent "Create three ComfyUI-friendly next-panel prompts where the character notices the viewer and lightly looks back." \
   --character "same bunny girl character, blonde hair, blue ribbon, light blue bunny ears" \
   --background "plain white background" \
@@ -263,6 +265,30 @@ uv run python -m panel_next \
   --candidates 3
 ```
 
+PowerShell version:
+
+```powershell
+uv run python -m panel_next `
+  --image data\Gy_iDapboAAbPrZ.jpg `
+  --out outputs\comfyui_prompt_run.json `
+  --comfyui-dir outputs\comfyui_prompts `
+  --intent "Create three ComfyUI-friendly next-panel prompts where the character notices the viewer and lightly looks back." `
+  --character "same bunny girl character, blonde hair, blue ribbon, light blue bunny ears" `
+  --background "plain white background" `
+  --fixed "same outfit" `
+  --fixed "light blue bunny ears" `
+  --fixed "white fur-lined jacket" `
+  --fixed "shiny light blue bodysuit" `
+  --allowed "facial expression" `
+  --allowed "head direction" `
+  --allowed "camera angle" `
+  --avoid "different character" `
+  --avoid "different outfit" `
+  --avoid "different hairstyle" `
+  --avoid "extra limbs" `
+  --candidates 3
+```
+
 The output JSON contains `next_panels[].comfyui_prompt`, which is intended to be copied directly into a ComfyUI positive prompt field. Each prompt is organized as newline-separated lines in this order:
 
 1. fixed continuity text
@@ -276,6 +302,16 @@ To print only the copy-paste prompts and negative prompts:
 ```bash
 uv run python -c "import json; from pathlib import Path; data=json.loads(Path('outputs/comfyui_prompt_run.json').read_text(encoding='utf-8')); [print('--- candidate {}: {} ---\n{}\nNEGATIVE:\n{}\n'.format(p['panel_id'], p['purpose'], p['comfyui_prompt'], p['negative_prompt'])) for p in data['next_panels']]"
 ```
+
+When `--comfyui-dir outputs/comfyui_prompts` is used, the CLI also writes Windows-friendly UTF-8 text files:
+
+```text
+outputs/comfyui_prompts/candidate_01_positive.txt
+outputs/comfyui_prompts/candidate_01_negative.txt
+outputs/comfyui_prompts/candidate_01_sections.txt
+```
+
+Open `candidate_01_positive.txt` and paste it into the ComfyUI positive prompt field. Open `candidate_01_negative.txt` and paste it into the negative prompt field. The `sections` file keeps the fixed text, angle, effects, situation, and object/background lines labeled for manual editing.
 
 Example generated positive prompt:
 
