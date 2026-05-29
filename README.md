@@ -328,6 +328,28 @@ uv run python -m panel_next `
   --out outputs\next_panel.json
 ```
 
+### Production Danbooru Tag CSV
+
+For production use, generate `data/danbooru_tags.csv` from Danbooru's tag API:
+
+```powershell
+uv run python scripts\update_danbooru_tags.py `
+  --out data\danbooru_tags.csv `
+  --min-count 50 `
+  --max-pages 200
+```
+
+The generated CSV contains:
+
+```csv
+word,frequency,category,is_deprecated
+1girl,1234567,0,False
+```
+
+If `data/danbooru_tags.csv` exists, `panel-next` loads it automatically. You can also pass a different file with `--tag-lexicon`.
+
+The updater fetches tags ordered by post count and skips empty, deprecated, and very low-frequency tags according to the command options. The CSV is ignored by Git because it can be large and should be regenerated when you want a fresher tag snapshot.
+
 The CLI also prints progress messages while it is running:
 
 ```text

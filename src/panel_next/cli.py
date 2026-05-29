@@ -21,6 +21,7 @@ from .tag_lexicon import load_tag_frequencies
 
 DEFAULT_TEXT_MODEL = "huihui_ai/qwen3-abliterated:8b"
 DEFAULT_VISION_MODEL = "huihui_ai/qwen3-vl-abliterated:8b"
+DEFAULT_TAG_LEXICON = Path("data/danbooru_tags.csv")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -146,7 +147,8 @@ def main(argv: list[str] | None = None) -> int:
             forbidden_changes=args.avoid,
             context_file=args.context_file,
         )
-        tag_frequencies = load_tag_frequencies(args.tag_lexicon)
+        tag_lexicon = _resolve_tag_lexicon(args.tag_lexicon)
+        tag_frequencies = load_tag_frequencies(tag_lexicon)
         config = PipelineConfig(
             image=Path(args.image),
             intent=args.intent,
@@ -158,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
             candidates=args.candidates,
             continuity_control=continuity_control,
             comfyui_dir=Path(args.comfyui_dir) if args.comfyui_dir else None,
-            tag_lexicon=Path(args.tag_lexicon) if args.tag_lexicon else None,
+            tag_lexicon=tag_lexicon,
             tag_frequencies=tag_frequencies,
             debug=args.debug,
         )
@@ -204,3 +206,11 @@ def _run_with_progress(mode: str, config: PipelineConfig):
 
 def _progress(message: str) -> None:
     print(f"[panel-next] {message}", file=sys.stderr, flush=True)
+
+
+def _resolve_tag_lexicon(path: str | None) -> Path | None:
+    if path:
+        return Path(path)
+    if DEFAULT_TAG_LEXICON.exists():
+        return DEFAULT_TAG_LEXICON
+    return None

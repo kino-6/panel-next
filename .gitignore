@@ -1,7 +1,10 @@
 data/
 outputs/*.json
+outputs/*.csv
 outputs/**/*.txt
 outputs/debug_last_response.txt
+*.jpg
+*.png
 !outputs/.gitkeep
 
 # Byte-compiled / optimized / DLL files
