@@ -63,27 +63,15 @@ uv run python -m panel_next --image examples/base.png --vision-model your-vl-mod
 
 ## Usage
 
-Full pipeline with continuity controls:
+Full pipeline:
 
 ```bash
 uv run python -m panel_next \
   --image data/base.png \
-  --out outputs/next_panel.json \
-  --comfyui-dir outputs/comfyui_prompts \
   --intent "Make the next panel a natural surprised look-back beat." \
-  --character "same main character, preserve the established character concept" \
-  --background "preserve the current location, lighting, and background atmosphere" \
   --fixed "same hairstyle" \
   --fixed "same outfit" \
-  --fixed "same important accessories" \
-  --allowed "facial expression" \
-  --allowed "head direction" \
-  --allowed "camera angle" \
-  --avoid "different character" \
-  --avoid "different outfit" \
-  --avoid "different hairstyle" \
-  --avoid "extra limbs" \
-  --candidates 3
+  --fixed "same important accessories"
 ```
 
 PowerShell uses a backtick for line continuation, not `\`:
@@ -91,29 +79,19 @@ PowerShell uses a backtick for line continuation, not `\`:
 ```powershell
 uv run python -m panel_next `
   --image data\base.png `
-  --out outputs\next_panel.json `
-  --comfyui-dir outputs\comfyui_prompts `
   --intent "Make the next panel a natural surprised look-back beat." `
-  --character "same main character, preserve the established character concept" `
-  --background "preserve the current location, lighting, and background atmosphere" `
   --fixed "same hairstyle" `
   --fixed "same outfit" `
-  --fixed "same important accessories" `
-  --allowed "facial expression" `
-  --allowed "head direction" `
-  --allowed "camera angle" `
-  --avoid "different character" `
-  --avoid "different outfit" `
-  --avoid "different hairstyle" `
-  --avoid "extra limbs" `
-  --candidates 3
+  --fixed "same important accessories"
 ```
 
 You can also run it as a single line:
 
 ```powershell
-uv run python -m panel_next --image data\base.png --out outputs\next_panel.json --comfyui-dir outputs\comfyui_prompts --intent "Make the next panel a natural surprised look-back beat." --character "same main character, preserve the established character concept" --background "preserve the current location, lighting, and background atmosphere" --fixed "same hairstyle" --fixed "same outfit" --fixed "same important accessories" --allowed "facial expression" --allowed "head direction" --allowed "camera angle" --avoid "different character" --avoid "different outfit" --avoid "different hairstyle" --avoid "extra limbs" --candidates 3
+uv run python -m panel_next --image data\base.png --intent "Make the next panel a natural surprised look-back beat." --fixed "same hairstyle" --fixed "same outfit" --fixed "same important accessories"
 ```
+
+If `--out` is omitted, the CLI writes `outputs/next_panel_<timestamp>.json`. In full mode, the observation is also saved as `outputs/image_observation_<timestamp>.json`.
 
 Example with concrete continuity controls:
 
@@ -220,10 +198,10 @@ uv run python -m panel_next \
 - `--allowed`: element that may change freely. Can be passed multiple times.
 - `--avoid`: forbidden change or detail to avoid. Can be passed multiple times.
 - `--context-file`: JSON file containing continuity controls.
-- `--out`: output JSON path. Default: `outputs/next_panel.json`.
+- `--out`: output JSON path. Default: `outputs/next_panel_<timestamp>.json`.
 - `--comfyui-dir`: optional directory for ComfyUI prompt text files. Writes positive, negative, and section files per candidate with Windows-friendly CRLF line endings.
 - `--tag-lexicon`: optional Danbooru-style tag frequency lexicon as CSV or JSON. CSV columns: `word,frequency`.
-- `--observation`: observation JSON path. Default: `outputs/image_observation.json`.
+- `--observation`: observation JSON path. Default: `outputs/image_observation_<timestamp>.json` in observe/full modes. In plan mode, defaults to the latest `outputs/image_observation*.json`.
 - `--vision-model`: Ollama vision model. Default: `huihui_ai/qwen3-vl-abliterated:8b`.
 - `--text-model`: Ollama text model. Default: `huihui_ai/qwen3-abliterated:8b`.
 - `--ollama-url`: Ollama API URL. Default: `http://localhost:11434`.

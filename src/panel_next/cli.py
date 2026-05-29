@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from .context import build_continuity_control
@@ -69,8 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--out",
-        default="outputs/next_panel.json",
-        help="Output JSON path. Default: outputs/next_panel.json",
+        default=None,
+        help=(
+            "Output JSON path. Default: outputs/next_panel_<timestamp>.json "
+            "for plan/full modes."
+        ),
     )
     parser.add_argument(
         "--comfyui-dir",
@@ -90,10 +94,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--observation",
-        default="outputs/image_observation.json",
+        default=None,
         help=(
             "Observation JSON path. Used as output in observe mode and input in plan mode. "
-            "Default: outputs/image_observation.json"
+            "Default: outputs/image_observation_<timestamp>.json for observe/full modes, "
+            "or the latest outputs/image_observation*.json for plan mode."
         ),
     )
     parser.add_argument(
@@ -149,11 +154,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         tag_lexicon = _resolve_tag_lexicon(args.tag_lexicon)
         tag_frequencies = load_tag_frequencies(tag_lexicon)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         config = PipelineConfig(
             image=Path(args.image),
             intent=args.intent,
-            out=Path(args.out),
-            observation=Path(args.observation),
+            out=_resolve_output_path(args.out, args.mode, timestamp),
+            observation=_resolve_observation_path(args.observation, args.mode, timestamp),
             vision_model=args.vision_model,
             text_model=args.text_model,
             ollama_url=args.ollama_url,
@@ -214,3 +220,31 @@ def _resolve_tag_lexicon(path: str | None) -> Path | None:
     if DEFAULT_TAG_LEXICON.exists():
         return DEFAULT_TAG_LEXICON
     return None
+
+
+def _resolve_output_path(path: str | None, mode: str, timestamp: str) -> Path:
+    if path:
+        return Path(path)
+    if mode == "observe":
+        return Path(f"outputs/next_panel_{timestamp}.json")
+    return Path(f"outputs/next_panel_{timestamp}.json")
+
+
+def _resolve_observation_path(path: str | None, mode: str, timestamp: str) -> Path:
+    if path:
+        return Path(path)
+    if mode == "plan":
+        latest = _latest_observation_path()
+        if latest is not None:
+            return latest
+        return Path("outputs/image_observation.json")
+    return Path(f"outputs/image_observation_{timestamp}.json")
+
+
+def _latest_observation_path() -> Path | None:
+    candidates = sorted(
+        Path("outputs").glob("image_observation*.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    return candidates[0] if candidates else None
