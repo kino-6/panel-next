@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .context import build_continuity_control
+from .comfyui_export import ComfyUIExportConfig, ComfyUIExportError, export_comfyui_workflow
 from .image_io import ImageInputError
 from .ollama_client import OllamaError
 from .ollama_client import OllamaClient
@@ -137,7 +138,30 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def build_export_comfyui_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="panel-next export-comfyui",
+        description="Export a ComfyUI API workflow JSON from a panel-next plan.",
+    )
+    parser.add_argument("--plan", required=True, help="panel-next output JSON path.")
+    parser.add_argument("--template", required=True, help="ComfyUI API workflow template JSON path.")
+    parser.add_argument("--candidate", type=int, default=1, help="Candidate panel id or 1-based index. Default: 1")
+    parser.add_argument("--positive-node", required=True, help="Positive CLIPTextEncode node id.")
+    parser.add_argument("--negative-node", required=True, help="Negative CLIPTextEncode node id.")
+    parser.add_argument(
+        "--out",
+        required=True,
+        help="Output ComfyUI workflow JSON path.",
+    )
+    return parser
+
+
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] == "export-comfyui":
+        return export_comfyui_main(argv[1:])
+
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.candidates < 1:
@@ -184,6 +208,26 @@ def main(argv: list[str] | None = None) -> int:
     except (ImageInputError, FileNotFoundError, ValueError, OllamaError) as exc:
         print(f"panel-next error: {exc}", file=sys.stderr)
         return 1
+    return 0
+
+
+def export_comfyui_main(argv: list[str] | None = None) -> int:
+    parser = build_export_comfyui_parser()
+    args = parser.parse_args(argv)
+    config = ComfyUIExportConfig(
+        plan=Path(args.plan),
+        template=Path(args.template),
+        out=Path(args.out),
+        candidate=args.candidate,
+        positive_node=str(args.positive_node),
+        negative_node=str(args.negative_node),
+    )
+    try:
+        export_comfyui_workflow(config)
+    except (ComfyUIExportError, FileNotFoundError) as exc:
+        print(f"panel-next export-comfyui error: {exc}", file=sys.stderr)
+        return 1
+    print(f"ComfyUI workflow saved to: {config.out}")
     return 0
 
 

@@ -420,6 +420,24 @@ different character, different outfit, extra limbs, distorted hands, low quality
 
 This MVP intentionally stops at JSON planning. A later layer can read `outputs/next_panel.json`, select one `next_panels` item, and copy `comfyui_prompt` directly into a ComfyUI prompt field. The same item also includes `prompt_sections` so fixed continuity text, angle, screen effects, situation, and object/background details can be edited independently.
 
+## Export ComfyUI Workflow JSON
+
+If you have a ComfyUI API workflow template, `panel-next` can export a candidate into that workflow by replacing the positive and negative prompt nodes.
+
+```powershell
+uv run python -m panel_next export-comfyui `
+  --plan outputs\next_panel_20260530_010122.json `
+  --candidate 1 `
+  --template workflows\comfyui_api_template.json `
+  --positive-node 6 `
+  --negative-node 7 `
+  --out outputs\comfyui_candidate_01.json
+```
+
+This expects ComfyUI's API prompt format: a JSON object keyed by node id. The specified positive and negative nodes must have `inputs.text`. Only those two text fields are changed; the rest of the workflow is preserved.
+
+See `workflows/README.md` for the template contract.
+
 ## Troubleshooting
 
 - `Could not connect to Ollama`: start Ollama with `ollama serve` and check `--ollama-url`.
