@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .tag_lexicon import BUILTIN_TAG_FREQUENCIES, continuity_text_to_tags
+
 
 PROMPT_SECTION_ORDER = ("fixed", "angle", "screen_effects", "situation", "objects")
 
@@ -11,7 +13,9 @@ def ensure_comfyui_prompts(
     panels: Any,
     observation: dict[str, Any],
     continuity_control: dict[str, Any],
+    tag_frequencies: dict[str, int] | None = None,
 ) -> Any:
+    frequencies = tag_frequencies or BUILTIN_TAG_FREQUENCIES
     if not isinstance(panels, list):
         return panels
     for index, panel in enumerate(panels, start=1):
@@ -20,16 +24,21 @@ def ensure_comfyui_prompts(
         ensure_panel_defaults(panel, index, observation, continuity_control)
         sections = panel.get("prompt_sections")
         if not isinstance(sections, dict):
-            sections = build_prompt_sections(panel, observation, continuity_control)
+            sections = build_prompt_sections(
+                panel, observation, continuity_control, frequencies
+            )
             panel["prompt_sections"] = sections
         else:
-            fallback = build_prompt_sections(panel, observation, continuity_control)
+            fallback = build_prompt_sections(
+                panel, observation, continuity_control, frequencies
+            )
             for key, value in fallback.items():
                 if not isinstance(sections.get(key), str) or not sections[key].strip():
                     sections[key] = value
+            sections["fixed"] = fallback["fixed"]
         if not isinstance(panel.get("comfyui_prompt"), str) or not panel[
             "comfyui_prompt"
-        ].strip():
+        ].strip() or _contains_generic_continuity(panel["comfyui_prompt"]):
             panel["comfyui_prompt"] = join_prompt_sections(sections)
     return panels
 
@@ -76,23 +85,27 @@ def build_prompt_sections(
     panel: dict[str, Any],
     observation: dict[str, Any],
     continuity_control: dict[str, Any],
+    tag_frequencies: dict[str, int] | None = None,
 ) -> dict[str, str]:
-    fixed_parts = []
+    fixed_parts: list[str] = []
     if continuity_control.get("character_concept"):
         fixed_parts.append(str(continuity_control["character_concept"]))
     if continuity_control.get("background_concept"):
         fixed_parts.append(str(continuity_control["background_concept"]))
     fixed_parts.extend(str(item) for item in continuity_control.get("fixed_elements", []))
     fixed_parts.extend(str(item) for item in observation.get("continuity_constraints", []))
-    if not fixed_parts:
-        fixed_parts.append("same character identity, same outfit, continuity from source image")
+    fixed_text = continuity_text_to_tags(
+        fixed_parts + [str(item) for item in observation.get("important_visual_details", [])],
+        explicit_tags=panel.get("danbooru_tags", []),
+        frequencies=tag_frequencies,
+    )
 
     objects = [str(item) for item in observation.get("important_visual_details", [])]
     if observation.get("composition"):
         objects.append(str(observation["composition"]))
 
     return {
-        "fixed": ", ".join(fixed_parts),
+        "fixed": fixed_text,
         "angle": str(
             panel.get("camera")
             or observation.get("composition")
@@ -114,6 +127,11 @@ def join_prompt_sections(sections: dict[str, str]) -> str:
         for key in PROMPT_SECTION_ORDER
         if isinstance(sections.get(key), str) and sections[key].strip()
     )
+
+
+def _contains_generic_continuity(prompt: str) -> bool:
+    lowered = prompt.lower()
+    return "same character" in lowered or "continuity from source image" in lowered
 
 
 def write_comfyui_prompt_files(

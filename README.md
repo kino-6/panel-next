@@ -194,6 +194,7 @@ uv run python -m panel_next \
 - `--context-file`: JSON file containing continuity controls.
 - `--out`: output JSON path. Default: `outputs/next_panel.json`.
 - `--comfyui-dir`: optional directory for ComfyUI prompt text files. Writes positive, negative, and section files per candidate with Windows-friendly CRLF line endings.
+- `--tag-lexicon`: optional Danbooru-style tag frequency lexicon as CSV or JSON. CSV columns: `word,frequency`.
 - `--observation`: observation JSON path. Default: `outputs/image_observation.json`.
 - `--vision-model`: Ollama vision model. Default: `huihui_ai/qwen3-vl-abliterated:8b`.
 - `--text-model`: Ollama text model. Default: `huihui_ai/qwen3-abliterated:8b`.
@@ -230,13 +231,13 @@ uv run python -m panel_next \
       "purpose": "reaction shot",
       "natural_prompt": "English prompt for Anima or image generation model.",
       "prompt_sections": {
-        "fixed": "same character, same outfit, same hairstyle, red ribbon, continuity from source image",
+        "fixed": "1girl, solo, blonde_hair, long_hair, hair_ribbon, ribbon, white_background",
         "angle": "medium close-up, slight low angle, looking back over shoulder",
         "screen_effects": "soft rain glow, subtle motion emphasis, clean anime linework",
         "situation": "the character notices something behind her and turns with controlled surprise",
         "objects": "wet shrine stones, torii gate, red ribbon, preserved background elements"
       },
-      "comfyui_prompt": "same character, same outfit, same hairstyle, red ribbon, continuity from source image\nmedium close-up, slight low angle, looking back over shoulder\nsoft rain glow, subtle motion emphasis, clean anime linework\nthe character notices something behind her and turns with controlled surprise\nwet shrine stones, torii gate, red ribbon, preserved background elements",
+      "comfyui_prompt": "1girl, solo, blonde_hair, long_hair, hair_ribbon, ribbon, white_background\nmedium close-up, slight low angle, looking back over shoulder\nsoft rain glow, subtle motion emphasis, clean anime linework\nthe character notices something behind her and turns with controlled surprise\nwet shrine stones, torii gate, red ribbon, preserved background elements",
       "danbooru_tags": ["1girl", "surprised", "looking_back"],
       "camera": "medium close-up, slight low angle",
       "emotion": "surprised but controlled",
@@ -300,11 +301,32 @@ uv run python -m panel_next `
 
 The output JSON contains `next_panels[].comfyui_prompt`, which is intended to be copied directly into a ComfyUI positive prompt field. Each prompt is organized as newline-separated lines in this order:
 
-1. fixed continuity text
+1. fixed continuity tags
 2. angle and camera
 3. screen effects
 4. situation
 5. objects, props, and background details
+
+The first line is tag-oriented. The CLI rewrites vague continuity phrases such as `same character`, `same outfit`, and `continuity from source image` into concrete Danbooru-style tags when possible. It uses a small built-in tag frequency table by default. For better results, pass your own tag frequency file:
+
+```csv
+word,frequency
+1girl,10000000
+solo,9000000
+blonde_hair,5000000
+bunny_ears,1000000
+hair_ribbon,1000000
+white_background,800000
+```
+
+Run with:
+
+```powershell
+uv run python -m panel_next `
+  --image data\Gy_iDapboAAbPrZ.jpg `
+  --tag-lexicon data\danbooru_tags.csv `
+  --out outputs\next_panel.json
+```
 
 The CLI also prints progress messages while it is running:
 
@@ -321,7 +343,7 @@ After planning, it prints copy-paste prompt blocks to the terminal:
 ```text
 === Candidate 1: reaction shot ===
 POSITIVE:
-same character, same outfit, same hairstyle, continuity from source image
+1girl, solo, blonde_hair, long_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background
 medium close-up, slight low angle, looking back over shoulder
 soft rim light, subtle motion emphasis, clean anime linework
 the character notices something behind her and turns with controlled surprise
@@ -351,7 +373,7 @@ Open `candidate_01_positive.txt` and paste it into the ComfyUI positive prompt f
 Example generated positive prompt:
 
 ```text
-same character, same outfit, same hairstyle, continuity from source image
+1girl, solo, blonde_hair, long_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background
 medium close-up, slight low angle, looking back over shoulder
 soft rim light, subtle motion emphasis, clean anime linework
 the character notices something behind her and turns with controlled surprise

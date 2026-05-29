@@ -28,10 +28,42 @@ def test_ensure_comfyui_prompts_fills_missing_fields() -> None:
     panel = result[0]
     assert panel["continuity_note"].startswith("Keep the same character identity")
     assert "different character" in panel["negative_prompt"]
-    assert panel["prompt_sections"]["fixed"].startswith("same bunny girl")
+    assert "bunny_ears" in panel["prompt_sections"]["fixed"]
+    assert "same character" not in panel["prompt_sections"]["fixed"]
     assert panel["prompt_sections"]["angle"] == "medium close-up"
     assert "blue ribbon" in panel["prompt_sections"]["objects"]
     assert "\n" in panel["comfyui_prompt"]
+
+
+def test_ensure_comfyui_prompts_rewrites_generic_fixed_prompt() -> None:
+    panels = [
+        {
+            "panel_id": 1,
+            "purpose": "reaction shot",
+            "natural_prompt": "blonde bunny girl looking back",
+            "prompt_sections": {
+                "fixed": "same character, same outfit, same hairstyle",
+                "angle": "medium close-up",
+                "screen_effects": "clean linework",
+                "situation": "looking back",
+                "objects": "blue ribbon",
+            },
+            "comfyui_prompt": "same character, same outfit, same hairstyle\nmedium close-up",
+            "danbooru_tags": ["1girl", "looking_back"],
+        }
+    ]
+    observation = {
+        "composition": "back view",
+        "important_visual_details": ["blonde hair", "bunny ears", "blue ribbon"],
+        "continuity_constraints": ["same outfit"],
+    }
+
+    result = ensure_comfyui_prompts(panels, observation, {})
+
+    fixed = result[0]["prompt_sections"]["fixed"]
+    assert fixed.startswith("1girl")
+    assert "blonde_hair" in fixed
+    assert "same character" not in result[0]["comfyui_prompt"]
 
 
 def test_write_comfyui_prompt_files_uses_windows_line_endings(tmp_path) -> None:

@@ -34,6 +34,8 @@ class PipelineConfig:
     candidates: int
     continuity_control: ContinuityControl
     comfyui_dir: Path | None = None
+    tag_lexicon: Path | None = None
+    tag_frequencies: dict[str, int] | None = None
     debug: bool = False
 
 
@@ -72,7 +74,12 @@ def run_plan(
     )
     parsed = _parse_or_save_debug(raw_response, "next panel plan")
     panels = parsed.get("next_panels") if isinstance(parsed, dict) else parsed
-    panels = ensure_comfyui_prompts(panels, observation, config.continuity_control)
+    panels = ensure_comfyui_prompts(
+        panels,
+        observation,
+        config.continuity_control,
+        tag_frequencies=config.tag_frequencies,
+    )
     output: PanelNextOutput = {
         "source_image": str(config.image),
         "user_intent": config.intent,

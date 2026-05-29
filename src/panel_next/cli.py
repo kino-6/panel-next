@@ -16,6 +16,7 @@ from .pipeline import (
     run_observe,
     run_plan,
 )
+from .tag_lexicon import load_tag_frequencies
 
 
 DEFAULT_TEXT_MODEL = "huihui_ai/qwen3-abliterated:8b"
@@ -79,6 +80,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--tag-lexicon",
+        default=None,
+        help=(
+            "Optional Danbooru-style tag frequency lexicon as CSV or JSON. "
+            "CSV columns: word,frequency."
+        ),
+    )
+    parser.add_argument(
         "--observation",
         default="outputs/image_observation.json",
         help=(
@@ -137,6 +146,7 @@ def main(argv: list[str] | None = None) -> int:
             forbidden_changes=args.avoid,
             context_file=args.context_file,
         )
+        tag_frequencies = load_tag_frequencies(args.tag_lexicon)
         config = PipelineConfig(
             image=Path(args.image),
             intent=args.intent,
@@ -148,6 +158,8 @@ def main(argv: list[str] | None = None) -> int:
             candidates=args.candidates,
             continuity_control=continuity_control,
             comfyui_dir=Path(args.comfyui_dir) if args.comfyui_dir else None,
+            tag_lexicon=Path(args.tag_lexicon) if args.tag_lexicon else None,
+            tag_frequencies=tag_frequencies,
             debug=args.debug,
         )
         result = _run_with_progress(args.mode, config)

@@ -46,6 +46,8 @@ Requirements:
 - Avoid overloading one panel with too many actions.
 - natural_prompt must be in English.
 - prompt_sections values must be concise English prompt lines for ComfyUI copy-paste use.
+- prompt_sections.fixed should use concrete Danbooru-style tags, not vague phrases such as "same character", "same outfit", or "continuity from source image".
+- Prefer concrete tags such as 1girl, solo, blonde_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background, looking_back.
 - comfyui_prompt must be a newline-joined prompt assembled in this exact order: fixed, angle, screen_effects, situation, objects.
 - comfyui_prompt should not include section labels; each line should be directly usable as prompt text.
 - why_this_next must be in Japanese.
@@ -61,13 +63,13 @@ NEXT_PANEL_JSON_INSTRUCTIONS = """Return exactly this JSON shape:
       "purpose": "reaction shot",
       "natural_prompt": "English prompt for Anima or image generation model.",
       "prompt_sections": {
-        "fixed": "same character, same outfit, same hairstyle, continuity from source image",
+        "fixed": "1girl, solo, blonde_hair, long_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background",
         "angle": "medium close-up, slight low angle, looking back over shoulder",
         "screen_effects": "soft rim light, subtle motion emphasis, clean anime linework",
         "situation": "the character notices something behind her and turns with controlled surprise",
         "objects": "preserve visible accessories, background elements, and important props from the source image"
       },
-      "comfyui_prompt": "same character, same outfit, same hairstyle, continuity from source image\nmedium close-up, slight low angle, looking back over shoulder\nsoft rim light, subtle motion emphasis, clean anime linework\nthe character notices something behind her and turns with controlled surprise\npreserve visible accessories, background elements, and important props from the source image",
+      "comfyui_prompt": "1girl, solo, blonde_hair, long_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background\nmedium close-up, slight low angle, looking back over shoulder\nsoft rim light, subtle motion emphasis, clean anime linework\nthe character notices something behind her and turns with controlled surprise\npreserve visible accessories, background elements, and important props from the source image",
       "danbooru_tags": ["1girl", "surprised", "looking_back"],
       "camera": "medium close-up, slight low angle",
       "emotion": "surprised but controlled",
