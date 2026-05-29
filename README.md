@@ -69,6 +69,7 @@ Full pipeline:
 uv run python -m panel_next \
   --image data/base.png \
   --intent "Make the next panel a natural surprised look-back beat." \
+  --fixed "same character" \
   --fixed "same hairstyle" \
   --fixed "same outfit" \
   --fixed "same important accessories"
@@ -80,6 +81,7 @@ PowerShell uses a backtick for line continuation, not `\`:
 uv run python -m panel_next `
   --image data\base.png `
   --intent "Make the next panel a natural surprised look-back beat." `
+  --fixed "same character" `
   --fixed "same hairstyle" `
   --fixed "same outfit" `
   --fixed "same important accessories"
@@ -88,7 +90,7 @@ uv run python -m panel_next `
 You can also run it as a single line:
 
 ```powershell
-uv run python -m panel_next --image data\base.png --intent "Make the next panel a natural surprised look-back beat." --fixed "same hairstyle" --fixed "same outfit" --fixed "same important accessories"
+uv run python -m panel_next --image data\base.png --intent "Make the next panel a natural surprised look-back beat." --fixed "same character" --fixed "same hairstyle" --fixed "same outfit" --fixed "same important accessories"
 ```
 
 If `--out` is omitted, the CLI writes `outputs/next_panel_<timestamp>.json`. In full mode, the observation is also saved as `outputs/image_observation_<timestamp>.json`.

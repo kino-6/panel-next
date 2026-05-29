@@ -36,9 +36,11 @@ def ensure_comfyui_prompts(
                 if not isinstance(sections.get(key), str) or not sections[key].strip():
                     sections[key] = value
             sections["fixed"] = fallback["fixed"]
-        if not isinstance(panel.get("comfyui_prompt"), str) or not panel[
-            "comfyui_prompt"
-        ].strip() or _contains_generic_continuity(panel["comfyui_prompt"]):
+        if (
+            not isinstance(panel.get("comfyui_prompt"), str)
+            or not panel["comfyui_prompt"].strip()
+            or _contains_generic_continuity(panel["comfyui_prompt"])
+        ):
             panel["comfyui_prompt"] = join_prompt_sections(sections)
     return panels
 
@@ -94,6 +96,10 @@ def build_prompt_sections(
         fixed_parts.append(str(continuity_control["background_concept"]))
     fixed_parts.extend(str(item) for item in continuity_control.get("fixed_elements", []))
     fixed_parts.extend(str(item) for item in observation.get("continuity_constraints", []))
+    if _requests_same_character(continuity_control):
+        fixed_parts.extend(_stringify_observation_list(observation.get("characters", [])))
+        fixed_parts.extend(str(item) for item in observation.get("important_visual_details", []))
+
     fixed_text = continuity_text_to_tags(
         fixed_parts + [str(item) for item in observation.get("important_visual_details", [])],
         explicit_tags=panel.get("danbooru_tags", []),
@@ -129,11 +135,6 @@ def join_prompt_sections(sections: dict[str, str]) -> str:
     )
 
 
-def _contains_generic_continuity(prompt: str) -> bool:
-    lowered = prompt.lower()
-    return "same character" in lowered or "continuity from source image" in lowered
-
-
 def write_comfyui_prompt_files(
     output_dir: Path,
     panels: list[dict[str, Any]],
@@ -155,6 +156,31 @@ def write_comfyui_prompt_files(
         )
         written.extend([positive_path, negative_path, sections_path])
     return written
+
+
+def _contains_generic_continuity(prompt: str) -> bool:
+    lowered = prompt.lower()
+    return "same character" in lowered or "continuity from source image" in lowered
+
+
+def _requests_same_character(continuity_control: dict[str, Any]) -> bool:
+    fixed_elements = continuity_control.get("fixed_elements", [])
+    haystack = " ".join(str(item) for item in fixed_elements).lower()
+    return "same character" in haystack or "character identity" in haystack
+
+
+def _stringify_observation_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    texts = []
+    for item in value:
+        if isinstance(item, str):
+            texts.append(item)
+        elif isinstance(item, dict):
+            texts.extend(str(part) for part in item.values())
+        else:
+            texts.append(str(item))
+    return texts
 
 
 def _format_sections(sections: Any) -> str:

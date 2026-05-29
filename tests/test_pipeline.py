@@ -66,6 +66,43 @@ def test_ensure_comfyui_prompts_rewrites_generic_fixed_prompt() -> None:
     assert "same character" not in result[0]["comfyui_prompt"]
 
 
+def test_same_character_fixed_uses_observed_character_details() -> None:
+    panels = [
+        {
+            "panel_id": 1,
+            "purpose": "reaction shot",
+            "natural_prompt": "looking back",
+            "camera": "medium close-up",
+            "danbooru_tags": ["1girl"],
+        }
+    ]
+    observation = {
+        "characters": [
+            {
+                "name": "Bunny girl",
+                "traits": [
+                    "blonde long hair",
+                    "blue bunny ears",
+                    "pink eyes",
+                    "blue ribbon",
+                ],
+            }
+        ],
+        "composition": "back view",
+        "important_visual_details": [],
+        "continuity_constraints": [],
+    }
+    continuity_control = {"fixed_elements": ["same character"]}
+
+    result = ensure_comfyui_prompts(panels, observation, continuity_control)
+
+    fixed = result[0]["prompt_sections"]["fixed"]
+    assert "1girl" in fixed
+    assert "blonde_hair" in fixed
+    assert "bunny_ears" in fixed
+    assert "same character" not in fixed
+
+
 def test_write_comfyui_prompt_files_uses_windows_line_endings(tmp_path) -> None:
     panels = [
         {
