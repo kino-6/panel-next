@@ -1,4 +1,6 @@
-data/
+data/*
+!data/.gitkeep
+!data/danbooru_tags.csv
 outputs/*.json
 outputs/*.csv
 outputs/**/*.txt
