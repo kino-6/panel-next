@@ -64,6 +64,21 @@ python -m panel_next \
   --out outputs/next_panel.json
 ```
 
+PowerShell uses a backtick for line continuation, not `\`:
+
+```powershell
+python -m panel_next `
+  --image examples/base.png `
+  --intent "Make the next panel a natural surprised look-back beat." `
+  --out outputs/next_panel.json
+```
+
+You can also run it as a single line:
+
+```powershell
+python -m panel_next --image examples/base.png --intent "Make the next panel a natural surprised look-back beat." --out outputs/next_panel.json
+```
+
 With explicit continuity controls:
 
 ```bash
