@@ -20,11 +20,19 @@ Python 3.11+ is required.
 uv sync
 ```
 
-Or install with standard Python tooling:
+After `uv sync`, run the CLI through uv:
+
+```bash
+uv run python -m panel_next --help
+```
+
+If you want to run `python -m panel_next` directly with your current Python, install the package into that Python environment:
 
 ```bash
 python -m pip install -e .
 ```
+
+If you see `No module named panel_next`, the package is not installed in the Python interpreter you are using. Use `uv run python -m panel_next ...` or run `python -m pip install -e .` first.
 
 ## Start Ollama
 
@@ -50,7 +58,7 @@ ollama list
 Then pass the model name explicitly:
 
 ```bash
-python -m panel_next --image examples/base.png --vision-model your-vl-model:tag
+uv run python -m panel_next --image examples/base.png --vision-model your-vl-model:tag
 ```
 
 ## Usage
@@ -58,7 +66,7 @@ python -m panel_next --image examples/base.png --vision-model your-vl-model:tag
 Full pipeline:
 
 ```bash
-python -m panel_next \
+uv run python -m panel_next \
   --image examples/base.png \
   --intent "Make the next panel a natural surprised look-back beat." \
   --out outputs/next_panel.json
@@ -67,7 +75,7 @@ python -m panel_next \
 PowerShell uses a backtick for line continuation, not `\`:
 
 ```powershell
-python -m panel_next `
+uv run python -m panel_next `
   --image examples/base.png `
   --intent "Make the next panel a natural surprised look-back beat." `
   --out outputs/next_panel.json
@@ -76,13 +84,13 @@ python -m panel_next `
 You can also run it as a single line:
 
 ```powershell
-python -m panel_next --image examples/base.png --intent "Make the next panel a natural surprised look-back beat." --out outputs/next_panel.json
+uv run python -m panel_next --image examples/base.png --intent "Make the next panel a natural surprised look-back beat." --out outputs/next_panel.json
 ```
 
 With explicit continuity controls:
 
 ```bash
-python -m panel_next \
+uv run python -m panel_next \
   --image examples/base.png \
   --intent "The character notices something behind her." \
   --character "17-year-old quiet girl, black bob hair, red ribbon, reserved but strong-willed" \
@@ -100,7 +108,7 @@ python -m panel_next \
 With explicit models:
 
 ```bash
-python -m panel_next \
+uv run python -m panel_next \
   --image examples/base.png \
   --intent "Give me three natural next-panel candidates." \
   --vision-model huihui_ai/qwen3-vl-abliterated:8b \
@@ -141,7 +149,7 @@ For repeatable series work, put continuity controls in JSON:
 Run with:
 
 ```bash
-python -m panel_next \
+uv run python -m panel_next \
   --image examples/base.png \
   --context-file examples/context.json \
   --intent "The next panel should show a controlled surprise."
@@ -156,7 +164,7 @@ CLI values override scalar values from `--context-file`. List values are merged.
 Observe only:
 
 ```bash
-python -m panel_next \
+uv run python -m panel_next \
   --mode observe \
   --image examples/base.png \
   --observation outputs/image_observation.json
@@ -165,7 +173,7 @@ python -m panel_next \
 Plan only from an existing observation:
 
 ```bash
-python -m panel_next \
+uv run python -m panel_next \
   --mode plan \
   --image examples/base.png \
   --observation outputs/image_observation.json \
