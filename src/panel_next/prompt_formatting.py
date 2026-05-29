@@ -13,9 +13,10 @@ def ensure_comfyui_prompts(
 ) -> Any:
     if not isinstance(panels, list):
         return panels
-    for panel in panels:
+    for index, panel in enumerate(panels, start=1):
         if not isinstance(panel, dict):
             continue
+        ensure_panel_defaults(panel, index, observation, continuity_control)
         sections = panel.get("prompt_sections")
         if not isinstance(sections, dict):
             sections = build_prompt_sections(panel, observation, continuity_control)
@@ -30,6 +31,44 @@ def ensure_comfyui_prompts(
         ].strip():
             panel["comfyui_prompt"] = join_prompt_sections(sections)
     return panels
+
+
+def ensure_panel_defaults(
+    panel: dict[str, Any],
+    panel_id: int,
+    observation: dict[str, Any],
+    continuity_control: dict[str, Any],
+) -> None:
+    panel.setdefault("panel_id", panel_id)
+    panel.setdefault("purpose", "next panel candidate")
+    panel.setdefault("natural_prompt", str(panel.get("purpose") or "natural next panel beat"))
+    panel.setdefault("danbooru_tags", [])
+    panel.setdefault(
+        "camera",
+        str(observation.get("composition") or "natural manga panel framing"),
+    )
+    panel.setdefault("emotion", "consistent with the intended next beat")
+    panel.setdefault(
+        "continuity_note",
+        "Keep the same character identity, outfit, hairstyle, lighting, and important background elements as the source image.",
+    )
+    forbidden = [
+        str(item)
+        for item in continuity_control.get("forbidden_changes", [])
+        if str(item).strip()
+    ]
+    negative_parts = forbidden + [
+        "different character",
+        "different outfit",
+        "extra limbs",
+        "distorted hands",
+        "low quality",
+    ]
+    panel.setdefault("negative_prompt", ", ".join(dict.fromkeys(negative_parts)))
+    panel.setdefault(
+        "why_this_next",
+        "前のコマの視覚情報と固定要素を保ちながら、自然な次の変化を作るため。",
+    )
 
 
 def build_prompt_sections(

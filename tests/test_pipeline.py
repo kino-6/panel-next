@@ -26,6 +26,8 @@ def test_ensure_comfyui_prompts_fills_missing_fields() -> None:
     result = ensure_comfyui_prompts(panels, observation, continuity_control)
 
     panel = result[0]
+    assert panel["continuity_note"].startswith("Keep the same character identity")
+    assert "different character" in panel["negative_prompt"]
     assert panel["prompt_sections"]["fixed"].startswith("same bunny girl")
     assert panel["prompt_sections"]["angle"] == "medium close-up"
     assert "blue ribbon" in panel["prompt_sections"]["objects"]

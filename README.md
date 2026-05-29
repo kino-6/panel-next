@@ -223,6 +223,61 @@ python -m panel_next \
 }
 ```
 
+## Generate ComfyUI Prompts
+
+The following is the same workflow used during local validation. Put a base image under `data/`, then run the full pipeline with continuity controls:
+
+```bash
+uv run python -m panel_next \
+  --image data/Gy_iDapboAAbPrZ.jpg \
+  --out outputs/comfyui_prompt_run.json \
+  --intent "Create three ComfyUI-friendly next-panel prompts where the character notices the viewer and lightly looks back." \
+  --character "same bunny girl character, blonde hair, blue ribbon, light blue bunny ears" \
+  --background "plain white background" \
+  --fixed "same outfit" \
+  --fixed "light blue bunny ears" \
+  --fixed "white fur-lined jacket" \
+  --fixed "shiny light blue bodysuit" \
+  --allowed "facial expression" \
+  --allowed "head direction" \
+  --allowed "camera angle" \
+  --avoid "different character" \
+  --avoid "different outfit" \
+  --avoid "different hairstyle" \
+  --avoid "extra limbs" \
+  --candidates 3
+```
+
+The output JSON contains `next_panels[].comfyui_prompt`, which is intended to be copied directly into a ComfyUI positive prompt field. Each prompt is organized as newline-separated lines in this order:
+
+1. fixed continuity text
+2. angle and camera
+3. screen effects
+4. situation
+5. objects, props, and background details
+
+To print only the copy-paste prompts and negative prompts:
+
+```bash
+uv run python -c "import json; from pathlib import Path; data=json.loads(Path('outputs/comfyui_prompt_run.json').read_text(encoding='utf-8')); [print('--- candidate {}: {} ---\n{}\nNEGATIVE:\n{}\n'.format(p['panel_id'], p['purpose'], p['comfyui_prompt'], p['negative_prompt'])) for p in data['next_panels']]"
+```
+
+Example generated positive prompt:
+
+```text
+same character, same outfit, same hairstyle, continuity from source image
+medium close-up, slight low angle, looking back over shoulder
+soft rim light, subtle motion emphasis, clean anime linework
+the character notices something behind her and turns with controlled surprise
+preserve visible accessories, background elements, and important props from the source image
+```
+
+Example negative prompt:
+
+```text
+different character, different outfit, extra limbs, distorted hands, low quality
+```
+
 ## Future ComfyUI / Anima Integration
 
 This MVP intentionally stops at JSON planning. A later layer can read `outputs/next_panel.json`, select one `next_panels` item, and copy `comfyui_prompt` directly into a ComfyUI prompt field. The same item also includes `prompt_sections` so fixed continuity text, angle, screen effects, situation, and object/background details can be edited independently.
