@@ -14,6 +14,7 @@ def test_next_panel_prompt_contains_generation_constraints() -> None:
     assert "Do not redesign the character" in NEXT_PANEL_SYSTEM_PROMPT
     assert "continuity_control.fixed_elements" in NEXT_PANEL_SYSTEM_PROMPT
     assert "comfyui_prompt must be a newline-joined prompt" in NEXT_PANEL_SYSTEM_PROMPT
+    assert "Do not copy wording from the JSON schema example" in NEXT_PANEL_SYSTEM_PROMPT
     assert "natural_prompt must be in English" in NEXT_PANEL_SYSTEM_PROMPT
     assert "why_this_next must be in Japanese" in NEXT_PANEL_SYSTEM_PROMPT
 
@@ -45,5 +46,6 @@ def test_next_panel_messages_include_user_inputs_and_prompt_sections() -> None:
     assert "continuity_control" in prompt
     assert "prompt_sections" in prompt
     assert "comfyui_prompt" in prompt
+    assert "bunny_ears" not in prompt
     assert "number_of_candidates" in prompt
     assert "next_panels" in prompt

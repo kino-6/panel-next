@@ -47,7 +47,8 @@ Requirements:
 - natural_prompt must be in English.
 - prompt_sections values must be concise English prompt lines for ComfyUI copy-paste use.
 - prompt_sections.fixed should use concrete Danbooru-style tags, not vague phrases such as "same character", "same outfit", or "continuity from source image".
-- Prefer concrete tags such as 1girl, solo, blonde_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background, looking_back.
+- Derive concrete tags from the actual image observation and continuity_control.
+- Do not copy wording from the JSON schema example. The example only defines the shape.
 - comfyui_prompt must be a newline-joined prompt assembled in this exact order: fixed, angle, screen_effects, situation, objects.
 - comfyui_prompt should not include section labels; each line should be directly usable as prompt text.
 - why_this_next must be in Japanese.
@@ -60,20 +61,20 @@ NEXT_PANEL_JSON_INSTRUCTIONS = """Return exactly this JSON shape:
   "next_panels": [
     {
       "panel_id": 1,
-      "purpose": "reaction shot",
-      "natural_prompt": "English prompt for Anima or image generation model.",
+      "purpose": "candidate-specific story beat",
+      "natural_prompt": "English prompt describing the candidate-specific next panel.",
       "prompt_sections": {
-        "fixed": "1girl, solo, blonde_hair, long_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background",
-        "angle": "medium close-up, slight low angle, looking back over shoulder",
-        "screen_effects": "soft rim light, subtle motion emphasis, clean anime linework",
-        "situation": "the character notices something behind her and turns with controlled surprise",
-        "objects": "preserve visible accessories, background elements, and important props from the source image"
+        "fixed": "concrete Danbooru-style tags derived from the actual image observation",
+        "angle": "candidate-specific camera angle and framing",
+        "screen_effects": "candidate-specific lighting, motion, atmosphere, and rendering notes",
+        "situation": "candidate-specific action or emotional beat for the next panel",
+        "objects": "observed objects, accessories, props, and background details to preserve"
       },
-      "comfyui_prompt": "1girl, solo, blonde_hair, long_hair, bunny_ears, hair_ribbon, bodysuit, jacket, white_background\nmedium close-up, slight low angle, looking back over shoulder\nsoft rim light, subtle motion emphasis, clean anime linework\nthe character notices something behind her and turns with controlled surprise\npreserve visible accessories, background elements, and important props from the source image",
-      "danbooru_tags": ["1girl", "surprised", "looking_back"],
-      "camera": "medium close-up, slight low angle",
-      "emotion": "surprised but controlled",
-      "continuity_note": "Keep the same character design, outfit, lighting, and background elements as the source image.",
+      "comfyui_prompt": "fixed tag line\nangle and framing line\nscreen effects line\nsituation line\nobjects and background line",
+      "danbooru_tags": ["tags", "derived_from", "the_actual_image"],
+      "camera": "candidate-specific camera description",
+      "emotion": "candidate-specific emotion",
+      "continuity_note": "Explain what must be preserved from the actual source image.",
       "negative_prompt": "different character, different outfit, extra limbs, distorted hands, low quality",
       "why_this_next": "Explain in Japanese why this panel is a natural next beat."
     }
