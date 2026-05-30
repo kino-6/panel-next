@@ -56,6 +56,21 @@ class SchemaValidationError(ValueError):
     """Raised when LLM JSON does not match the minimum required schema."""
 
 
+IMAGE_OBSERVATION_REQUIRED_KEYS = {
+    "summary",
+    "characters",
+    "composition",
+    "mood",
+    "important_visual_details",
+}
+IMAGE_OBSERVATION_TEXT_FIELDS = ("summary", "composition", "mood")
+IMAGE_OBSERVATION_LIST_FIELDS = (
+    "characters",
+    "important_visual_details",
+    "continuity_constraints",
+)
+
+
 def extract_json_from_response(response: str) -> Any:
     text = response.strip()
     fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.DOTALL | re.IGNORECASE)
@@ -86,33 +101,21 @@ def require_keys(data: dict[str, Any], keys: set[str], label: str) -> None:
 def validate_image_observation(data: Any) -> ImageObservation:
     if not isinstance(data, dict):
         raise SchemaValidationError("image_observation must be a JSON object.")
+    observation = dict(data)
     require_keys(
-        data,
-        {
-            "summary",
-            "characters",
-            "composition",
-            "mood",
-            "important_visual_details",
-        },
+        observation,
+        IMAGE_OBSERVATION_REQUIRED_KEYS,
         "image_observation",
     )
-    data.setdefault("continuity_constraints", [])
-    for key in ("summary", "composition", "mood"):
-        data[key] = str(data.get(key, "")).strip()
-    data["characters"] = _normalize_text_list(
-        data["characters"],
-        "image_observation.characters",
-    )
-    data["important_visual_details"] = _normalize_text_list(
-        data["important_visual_details"],
-        "image_observation.important_visual_details",
-    )
-    data["continuity_constraints"] = _normalize_text_list(
-        data["continuity_constraints"],
-        "image_observation.continuity_constraints",
-    )
-    return data
+    observation.setdefault("continuity_constraints", [])
+    for key in IMAGE_OBSERVATION_TEXT_FIELDS:
+        observation[key] = str(observation.get(key, "")).strip()
+    for key in IMAGE_OBSERVATION_LIST_FIELDS:
+        observation[key] = _normalize_text_list(
+            observation[key],
+            f"image_observation.{key}",
+        )
+    return observation
 
 
 def validate_next_panel(data: Any) -> NextPanel:
@@ -176,25 +179,24 @@ def validate_continuity_control(data: Any) -> ContinuityControl:
 def _normalize_text_list(value: Any, label: str) -> list[str]:
     if value is None:
         return []
-    if isinstance(value, str):
-        return [value.strip()] if value.strip() else []
-    if isinstance(value, dict):
-        return [_stringify_jsonish(value)]
+    if isinstance(value, str | dict):
+        text = _normalize_text_item(value)
+        return [text] if text else []
     if isinstance(value, list):
-        normalized = []
-        for item in value:
-            if item is None:
-                continue
-            if isinstance(item, str):
-                text = item.strip()
-            elif isinstance(item, dict):
-                text = _stringify_jsonish(item)
-            else:
-                text = str(item).strip()
-            if text:
-                normalized.append(text)
-        return normalized
+        return [
+            text
+            for item in value
+            if (text := _normalize_text_item(item))
+        ]
     raise SchemaValidationError(f"{label} must be a list or text.")
+
+
+def _normalize_text_item(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, dict):
+        return _stringify_jsonish(value)
+    return str(value).strip()
 
 
 def _stringify_jsonish(value: dict[str, Any]) -> str:

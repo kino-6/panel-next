@@ -70,11 +70,7 @@ def ensure_panel_defaults(
         "continuity_note",
         "Keep the same character identity, outfit, hairstyle, lighting, and important background elements as the source image.",
     )
-    forbidden = [
-        str(item)
-        for item in continuity_control.get("forbidden_changes", [])
-        if str(item).strip()
-    ]
+    forbidden = _forbidden_terms(continuity_control)
     negative_parts = forbidden + [
         "different character",
         "different outfit",
