@@ -103,6 +103,39 @@ def test_same_character_fixed_uses_observed_character_details() -> None:
     assert "same character" not in fixed
 
 
+def test_avoid_removes_forbidden_terms_from_positive_prompt() -> None:
+    panels = [
+        {
+            "panel_id": 1,
+            "purpose": "reaction shot",
+            "natural_prompt": "girl looks back in a transparent bodysuit",
+            "camera": "medium close-up",
+            "danbooru_tags": ["1girl", "transparent_bodysuit"],
+        }
+    ]
+    observation = {
+        "characters": ["brown-haired girl in transparent bodysuit"],
+        "composition": "reclining on a couch",
+        "important_visual_details": [
+            "transparent bodysuit with glossy texture",
+            "red bows",
+        ],
+        "continuity_constraints": ["preserve transparent bodysuit sheen"],
+    }
+    continuity_control = {
+        "fixed_elements": ["same character"],
+        "forbidden_changes": ["bodysuit"],
+    }
+
+    result = ensure_comfyui_prompts(panels, observation, continuity_control)
+
+    panel = result[0]
+    assert "bodysuit" not in panel["prompt_sections"]["fixed"]
+    assert "bodysuit" not in panel["prompt_sections"]["objects"]
+    assert "bodysuit" not in panel["comfyui_prompt"]
+    assert "bodysuit" in panel["negative_prompt"]
+
+
 def test_write_comfyui_prompt_files_uses_windows_line_endings(tmp_path) -> None:
     panels = [
         {

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ def ensure_comfyui_prompts(
         if not isinstance(panel, dict):
             continue
         ensure_panel_defaults(panel, index, observation, continuity_control)
+        forbidden_terms = _forbidden_terms(continuity_control)
         sections = panel.get("prompt_sections")
         if not isinstance(sections, dict):
             sections = build_prompt_sections(
@@ -36,10 +38,14 @@ def ensure_comfyui_prompts(
                 if not isinstance(sections.get(key), str) or not sections[key].strip():
                     sections[key] = value
             sections["fixed"] = fallback["fixed"]
+        if forbidden_terms:
+            sections = _remove_forbidden_from_sections(sections, forbidden_terms)
+            panel["prompt_sections"] = sections
         if (
             not isinstance(panel.get("comfyui_prompt"), str)
             or not panel["comfyui_prompt"].strip()
             or _contains_generic_continuity(panel["comfyui_prompt"])
+            or forbidden_terms
         ):
             panel["comfyui_prompt"] = join_prompt_sections(sections)
     return panels
@@ -77,6 +83,10 @@ def ensure_panel_defaults(
         "low quality",
     ]
     panel.setdefault("negative_prompt", ", ".join(dict.fromkeys(negative_parts)))
+    panel["negative_prompt"] = _merge_negative_prompt(
+        str(panel.get("negative_prompt", "")),
+        forbidden,
+    )
     panel.setdefault(
         "why_this_next",
         "前のコマの視覚情報と固定要素を保ちながら、自然な次の変化を作るため。",
@@ -161,6 +171,82 @@ def write_comfyui_prompt_files(
 def _contains_generic_continuity(prompt: str) -> bool:
     lowered = prompt.lower()
     return "same character" in lowered or "continuity from source image" in lowered
+
+
+def _forbidden_terms(continuity_control: dict[str, Any]) -> list[str]:
+    return [
+        str(item).strip()
+        for item in continuity_control.get("forbidden_changes", [])
+        if str(item).strip()
+    ]
+
+
+def _remove_forbidden_from_sections(
+    sections: dict[str, Any],
+    forbidden_terms: list[str],
+) -> dict[str, str]:
+    cleaned: dict[str, str] = {}
+    for key in PROMPT_SECTION_ORDER:
+        cleaned[key] = _remove_forbidden_terms(str(sections.get(key, "")), forbidden_terms)
+    return cleaned
+
+
+def _remove_forbidden_terms(text: str, forbidden_terms: list[str]) -> str:
+    lines = []
+    for line in text.splitlines() or [text]:
+        cleaned = _remove_forbidden_from_line(line, forbidden_terms)
+        if cleaned:
+            lines.append(cleaned)
+    return "\n".join(lines).strip()
+
+
+def _remove_forbidden_from_line(line: str, forbidden_terms: list[str]) -> str:
+    if "," in line:
+        parts = [part.strip() for part in line.split(",")]
+        kept = [
+            part
+            for part in parts
+            if part and not _contains_forbidden_term(part, forbidden_terms)
+        ]
+        return ", ".join(kept)
+
+    cleaned = line
+    for term in forbidden_terms:
+        for form in _term_forms(term):
+            cleaned = re.sub(
+                rf"(?i)(?<![\w]){re.escape(form)}(?![\w])",
+                "",
+                cleaned,
+            )
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    cleaned = re.sub(r"\s+([,.;:])", r"\1", cleaned)
+    return cleaned.strip(" ,.;:")
+
+
+def _contains_forbidden_term(text: str, forbidden_terms: list[str]) -> bool:
+    normalized = _normalize_for_match(text)
+    return any(_normalize_for_match(term) in normalized for term in forbidden_terms)
+
+
+def _term_forms(term: str) -> set[str]:
+    stripped = term.strip()
+    return {
+        stripped,
+        stripped.replace(" ", "_"),
+        stripped.replace("_", " "),
+        stripped.replace("-", "_"),
+        stripped.replace("_", "-"),
+    }
+
+
+def _normalize_for_match(text: str) -> str:
+    return re.sub(r"[\s-]+", "_", text.strip().lower())
+
+
+def _merge_negative_prompt(current: str, forbidden_terms: list[str]) -> str:
+    parts = [part.strip() for part in current.split(",") if part.strip()]
+    parts.extend(forbidden_terms)
+    return ", ".join(dict.fromkeys(parts))
 
 
 def _requests_same_character(continuity_control: dict[str, Any]) -> bool:

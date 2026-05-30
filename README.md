@@ -58,6 +58,14 @@ uv run python -m panel_next --image data\base.png --intent "次のコマ候補�
 
 Most runs should only need those three.
 
+If the vision model misreads a visible detail and it keeps appearing in the
+ComfyUI positive prompt, add `--avoid`. It is also removed from the positive
+prompt sections, not only appended to the negative prompt.
+
+```powershell
+uv run python -m panel_next --image data\base.png --intent "next panel ideas" --character "same main character" --avoid "bodysuit"
+```
+
 ## Output
 
 The terminal prints each candidate in a copy-paste format:
