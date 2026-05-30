@@ -3,7 +3,11 @@ from __future__ import annotations
 import pytest
 
 from panel_next.image_io import ImageInputError, validate_image_path
-from panel_next.schemas import extract_json_from_response, validate_panel_next_output
+from panel_next.schemas import (
+    extract_json_from_response,
+    validate_image_observation,
+    validate_panel_next_output,
+)
 
 
 def test_output_schema_validation_accepts_minimum_shape() -> None:
@@ -72,3 +76,23 @@ def test_extract_json_from_markdown_code_block() -> None:
 ```"""
 
     assert extract_json_from_response(response) == {"next_panels": [{"panel_id": 1}]}
+
+
+def test_image_observation_normalizes_llm_shape_drift() -> None:
+    observation = validate_image_observation(
+        {
+            "summary": "A character in a room.",
+            "characters": {
+                "name": "main girl",
+                "details": ["brown hair", "red bows"],
+            },
+            "composition": "medium shot",
+            "mood": "quiet",
+            "important_visual_details": "red bows and teal couch",
+            "continuity_constraints": None,
+        }
+    )
+
+    assert observation["characters"] == ["main girl, brown hair, red bows"]
+    assert observation["important_visual_details"] == ["red bows and teal couch"]
+    assert observation["continuity_constraints"] == []

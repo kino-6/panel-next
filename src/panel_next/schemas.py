@@ -98,16 +98,20 @@ def validate_image_observation(data: Any) -> ImageObservation:
         "image_observation",
     )
     data.setdefault("continuity_constraints", [])
-    if not isinstance(data["characters"], list):
-        raise SchemaValidationError("image_observation.characters must be a list.")
-    if not isinstance(data["important_visual_details"], list):
-        raise SchemaValidationError(
-            "image_observation.important_visual_details must be a list."
-        )
-    if not isinstance(data["continuity_constraints"], list):
-        raise SchemaValidationError(
-            "image_observation.continuity_constraints must be a list."
-        )
+    for key in ("summary", "composition", "mood"):
+        data[key] = str(data.get(key, "")).strip()
+    data["characters"] = _normalize_text_list(
+        data["characters"],
+        "image_observation.characters",
+    )
+    data["important_visual_details"] = _normalize_text_list(
+        data["important_visual_details"],
+        "image_observation.important_visual_details",
+    )
+    data["continuity_constraints"] = _normalize_text_list(
+        data["continuity_constraints"],
+        "image_observation.continuity_constraints",
+    )
     return data
 
 
@@ -167,6 +171,48 @@ def validate_continuity_control(data: Any) -> ContinuityControl:
         if not isinstance(data[key], list):
             raise SchemaValidationError(f"continuity_control.{key} must be a list.")
     return data
+
+
+def _normalize_text_list(value: Any, label: str) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value.strip()] if value.strip() else []
+    if isinstance(value, dict):
+        return [_stringify_jsonish(value)]
+    if isinstance(value, list):
+        normalized = []
+        for item in value:
+            if item is None:
+                continue
+            if isinstance(item, str):
+                text = item.strip()
+            elif isinstance(item, dict):
+                text = _stringify_jsonish(item)
+            else:
+                text = str(item).strip()
+            if text:
+                normalized.append(text)
+        return normalized
+    raise SchemaValidationError(f"{label} must be a list or text.")
+
+
+def _stringify_jsonish(value: dict[str, Any]) -> str:
+    parts = []
+    for item in value.values():
+        if item is None:
+            continue
+        if isinstance(item, list):
+            parts.extend(str(part).strip() for part in item if str(part).strip())
+        elif isinstance(item, dict):
+            text = _stringify_jsonish(item)
+            if text:
+                parts.append(text)
+        else:
+            text = str(item).strip()
+            if text:
+                parts.append(text)
+    return ", ".join(parts)
 
 
 def validate_panel_next_output(data: Any) -> PanelNextOutput:
