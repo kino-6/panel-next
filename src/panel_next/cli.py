@@ -98,8 +98,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Observation JSON path. Used as output in observe mode and input in plan mode. "
-            "Default: outputs/image_observation_<timestamp>.json for observe/full modes, "
-            "or the latest outputs/image_observation*.json for plan mode."
+            "Default: outputs/image_observation_<timestamp>.json for observe/full modes. "
+            "Required in plan mode."
         ),
     )
     parser.add_argument(
@@ -166,6 +166,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.candidates < 1:
         parser.error("--candidates must be 1 or greater.")
+    if args.mode == "plan" and not args.observation:
+        parser.error("--observation is required when --mode plan is used.")
 
     try:
         continuity_control = build_continuity_control(
@@ -279,17 +281,5 @@ def _resolve_observation_path(path: str | None, mode: str, timestamp: str) -> Pa
     if path:
         return Path(path)
     if mode == "plan":
-        latest = _latest_observation_path()
-        if latest is not None:
-            return latest
-        return Path("outputs/image_observation.json")
+        raise ValueError("--observation is required when --mode plan is used.")
     return Path(f"outputs/image_observation_{timestamp}.json")
-
-
-def _latest_observation_path() -> Path | None:
-    candidates = sorted(
-        Path("outputs").glob("image_observation*.json"),
-        key=lambda path: path.stat().st_mtime,
-        reverse=True,
-    )
-    return candidates[0] if candidates else None

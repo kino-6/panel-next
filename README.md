@@ -178,7 +178,7 @@ uv run python -m panel_next \
   --observation outputs/image_observation.json
 ```
 
-Plan only from an existing observation:
+Plan only from an explicitly selected existing observation:
 
 ```bash
 uv run python -m panel_next \
@@ -190,7 +190,7 @@ uv run python -m panel_next \
   --intent "Use a look-back reaction shot."
 ```
 
-In `--mode plan`, pass `--observation` when you want to reuse a specific image analysis. If omitted, the CLI uses the latest `outputs/image_observation*.json`, which may belong to a different source image.
+For normal use, prefer the default `--mode full` so the image observation is regenerated every run. `--mode plan` is only for intentionally reusing a specific observation file, and therefore requires `--observation`.
 
 ## CLI Options
 
@@ -205,7 +205,7 @@ In `--mode plan`, pass `--observation` when you want to reuse a specific image a
 - `--out`: output JSON path. Default: `outputs/next_panel_<timestamp>.json`.
 - `--comfyui-dir`: optional directory for ComfyUI prompt text files. Writes positive, negative, and section files per candidate with Windows-friendly CRLF line endings.
 - `--tag-lexicon`: optional Danbooru-style tag frequency lexicon as CSV or JSON. CSV columns: `word,frequency`.
-- `--observation`: observation JSON path. Default: `outputs/image_observation_<timestamp>.json` in observe/full modes. In plan mode, defaults to the latest `outputs/image_observation*.json`.
+- `--observation`: observation JSON path. Default: `outputs/image_observation_<timestamp>.json` in observe/full modes. Required in plan mode.
 - `--vision-model`: Ollama vision model. Default: `huihui_ai/qwen3-vl-abliterated:8b`.
 - `--text-model`: Ollama text model. Default: `huihui_ai/qwen3-abliterated:8b`.
 - `--ollama-url`: Ollama API URL. Default: `http://localhost:11434`.
