@@ -9,10 +9,21 @@ def test_continuity_text_to_tags_prefers_ranked_tags() -> None:
         explicit_tags=["looking_back", "not_a_real_builtin_tag"],
     )
 
-    assert prompt.startswith("blonde_hair")
+    assert prompt.startswith("1girl")
+    assert "blonde_hair" in prompt
     assert "bunny_ears" in prompt
     assert "not_a_real_builtin_tag" not in prompt
     assert "same character" not in prompt
+
+
+def test_continuity_text_to_tags_does_not_trust_unsupported_explicit_tags() -> None:
+    prompt = continuity_text_to_tags(
+        ["brown hair", "red bow", "school uniform"],
+        explicit_tags=["bodysuit", "looking_back"],
+    )
+
+    assert "bodysuit" not in prompt
+    assert "looking_back" not in prompt
 
 
 def test_load_csv_tag_lexicon_overrides_frequencies(tmp_path) -> None:

@@ -61,8 +61,8 @@ def test_ensure_comfyui_prompts_rewrites_generic_fixed_prompt() -> None:
     result = ensure_comfyui_prompts(panels, observation, {})
 
     fixed = result[0]["prompt_sections"]["fixed"]
-    assert fixed.startswith("1girl")
     assert "blonde_hair" in fixed
+    assert "bunny_ears" in fixed
     assert "same character" not in result[0]["comfyui_prompt"]
 
 

@@ -190,6 +190,8 @@ uv run python -m panel_next \
   --intent "Use a look-back reaction shot."
 ```
 
+In `--mode plan`, pass `--observation` when you want to reuse a specific image analysis. If omitted, the CLI uses the latest `outputs/image_observation*.json`, which may belong to a different source image.
+
 ## CLI Options
 
 - `--image`: input image path. Required.

@@ -239,6 +239,7 @@ def _run_with_progress(mode: str, config: PipelineConfig):
         _progress(f"observation saved: {config.observation}")
         return result
     if mode == "plan":
+        _progress(f"using observation: {config.observation}")
         _progress(f"planning next panels with text model: {config.text_model}")
         result = run_plan(config)
         _progress(f"plan saved: {config.out}")

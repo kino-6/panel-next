@@ -43,6 +43,9 @@ BUILTIN_TAG_FREQUENCIES: dict[str, int] = {
 
 
 PHRASE_TO_TAGS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("female character", ("1girl",)),
+    ("anime girl", ("1girl",)),
+    ("girl", ("1girl",)),
     ("bunny girl", ("bunny_girl", "bunny_ears")),
     ("bunny ears", ("bunny_ears",)),
     ("blonde", ("blonde_hair",)),
@@ -105,15 +108,18 @@ def extract_ranked_tags(
     explicit_tags: list[str] | None = None,
     frequencies: dict[str, int] | None = None,
     limit: int = 18,
+    trust_explicit: bool = False,
 ) -> list[str]:
     tag_frequencies = frequencies or BUILTIN_TAG_FREQUENCIES
     found: set[str] = set()
+    haystack = "\n".join(text for text in texts if text).lower()
     for tag in explicit_tags or []:
         normalized = normalize_tag(tag)
-        if normalized in tag_frequencies:
+        if normalized in tag_frequencies and (
+            trust_explicit or _tag_is_supported_by_text(normalized, haystack)
+        ):
             found.add(normalized)
 
-    haystack = "\n".join(text for text in texts if text).lower()
     for phrase, tags in PHRASE_TO_TAGS:
         if phrase in haystack:
             found.update(tags)
@@ -133,8 +139,14 @@ def continuity_text_to_tags(
     texts: list[str],
     explicit_tags: list[str] | None = None,
     frequencies: dict[str, int] | None = None,
+    trust_explicit: bool = False,
 ) -> str:
-    tags = extract_ranked_tags(texts, explicit_tags=explicit_tags, frequencies=frequencies)
+    tags = extract_ranked_tags(
+        texts,
+        explicit_tags=explicit_tags,
+        frequencies=frequencies,
+        trust_explicit=trust_explicit,
+    )
     if tags:
         return ", ".join(tags)
     cleaned = [
@@ -147,6 +159,13 @@ def continuity_text_to_tags(
 
 def normalize_tag(tag: str) -> str:
     return tag.strip().lower().replace(" ", "_")
+
+
+def _tag_is_supported_by_text(tag: str, haystack: str) -> bool:
+    words = [word for word in tag.replace("-", "_").split("_") if word]
+    if not words:
+        return False
+    return all(word in haystack for word in words)
 
 
 def _read_json_lexicon(path: Path) -> dict[str, int]:
