@@ -93,7 +93,13 @@ You can also run it as a single line:
 uv run python -m panel_next --image data\base.png --intent "Make the next panel a natural surprised look-back beat." --fixed "same character" --fixed "same hairstyle" --fixed "same outfit" --fixed "same important accessories"
 ```
 
-If `--out` is omitted, the CLI writes `outputs/next_panel_<timestamp>.json`. In full mode, the observation is also saved as `outputs/image_observation_<timestamp>.json`.
+If `--out` is omitted, the CLI writes related files under one run directory:
+
+```text
+outputs/<timestamp>/image_observation.json
+outputs/<timestamp>/next_panel.json
+outputs/<timestamp>/comfyui_prompts/
+```
 
 Example with concrete continuity controls:
 
@@ -202,10 +208,10 @@ For normal use, prefer the default `--mode full` so the image observation is reg
 - `--allowed`: element that may change freely. Can be passed multiple times.
 - `--avoid`: forbidden change or detail to avoid. Can be passed multiple times.
 - `--context-file`: JSON file containing continuity controls.
-- `--out`: output JSON path. Default: `outputs/next_panel_<timestamp>.json`.
-- `--comfyui-dir`: optional directory for ComfyUI prompt text files. Writes positive, negative, and section files per candidate with Windows-friendly CRLF line endings.
+- `--out`: output JSON path. Default: `outputs/<timestamp>/next_panel.json`.
+- `--comfyui-dir`: optional directory for ComfyUI prompt text files. Default: `outputs/<timestamp>/comfyui_prompts` in plan/full modes. Writes positive, negative, and section files per candidate with Windows-friendly CRLF line endings.
 - `--tag-lexicon`: optional Danbooru-style tag frequency lexicon as CSV or JSON. CSV columns: `word,frequency`.
-- `--observation`: observation JSON path. Default: `outputs/image_observation_<timestamp>.json` in observe/full modes. Required in plan mode.
+- `--observation`: observation JSON path. Default: `outputs/<timestamp>/image_observation.json` in observe/full modes. Required in plan mode.
 - `--vision-model`: Ollama vision model. Default: `huihui_ai/qwen3-vl-abliterated:8b`.
 - `--text-model`: Ollama text model. Default: `huihui_ai/qwen3-abliterated:8b`.
 - `--ollama-url`: Ollama API URL. Default: `http://localhost:11434`.
@@ -365,9 +371,9 @@ The CLI also prints progress messages while it is running:
 ```text
 [panel-next] accepted mode=full image=data\Gy_iDapboAAbPrZ.jpg
 [panel-next] observing image with vision model: huihui_ai/qwen3-vl-abliterated:8b
-[panel-next] observation saved: outputs\image_observation.json
+[panel-next] observation saved: outputs\20260530_010122\image_observation.json
 [panel-next] planning 3 next panel candidate(s): huihui_ai/qwen3-abliterated:8b
-[panel-next] plan saved: outputs\next_panel.json
+[panel-next] plan saved: outputs\20260530_010122\next_panel.json
 ```
 
 After planning, it prints copy-paste prompt blocks to the terminal:
@@ -420,7 +426,7 @@ different character, different outfit, extra limbs, distorted hands, low quality
 
 ## Future ComfyUI / Anima Integration
 
-This MVP intentionally stops at JSON planning. A later layer can read `outputs/next_panel.json`, select one `next_panels` item, and copy `comfyui_prompt` directly into a ComfyUI prompt field. The same item also includes `prompt_sections` so fixed continuity text, angle, screen effects, situation, and object/background details can be edited independently.
+This MVP intentionally stops at JSON planning. A later layer can read `outputs/<timestamp>/next_panel.json`, select one `next_panels` item, and copy `comfyui_prompt` directly into a ComfyUI prompt field. The same item also includes `prompt_sections` so fixed continuity text, angle, screen effects, situation, and object/background details can be edited independently.
 
 ## Export ComfyUI Workflow JSON
 
@@ -428,7 +434,7 @@ If you have a ComfyUI API workflow template, `panel-next` can export a candidate
 
 ```powershell
 uv run python -m panel_next export-comfyui `
-  --plan outputs\next_panel_20260530_010122.json `
+  --plan outputs\20260530_010122\next_panel.json `
   --candidate 1 `
   --template workflows\comfyui_api_template.json `
   --positive-node 6 `

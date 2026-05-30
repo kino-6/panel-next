@@ -73,7 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--out",
         default=None,
         help=(
-            "Output JSON path. Default: outputs/next_panel_<timestamp>.json "
+            "Output JSON path. Default: outputs/<timestamp>/next_panel.json "
             "for plan/full modes."
         ),
     )
@@ -82,7 +82,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Optional directory for Windows-friendly ComfyUI prompt text files "
-            "(positive, negative, and section files per candidate)."
+            "(positive, negative, and section files per candidate). "
+            "Default: outputs/<timestamp>/comfyui_prompts in plan/full modes."
         ),
     )
     parser.add_argument(
@@ -98,7 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Observation JSON path. Used as output in observe mode and input in plan mode. "
-            "Default: outputs/image_observation_<timestamp>.json for observe/full modes. "
+            "Default: outputs/<timestamp>/image_observation.json for observe/full modes. "
             "Required in plan mode."
         ),
     )
@@ -181,17 +182,22 @@ def main(argv: list[str] | None = None) -> int:
         tag_lexicon = _resolve_tag_lexicon(args.tag_lexicon)
         tag_frequencies = load_tag_frequencies(tag_lexicon)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = _resolve_output_dir(timestamp)
         config = PipelineConfig(
             image=Path(args.image),
             intent=args.intent,
-            out=_resolve_output_path(args.out, args.mode, timestamp),
-            observation=_resolve_observation_path(args.observation, args.mode, timestamp),
+            out=_resolve_output_path(args.out, args.mode, output_dir),
+            observation=_resolve_observation_path(args.observation, args.mode, output_dir),
             vision_model=args.vision_model,
             text_model=args.text_model,
             ollama_url=args.ollama_url,
             candidates=args.candidates,
             continuity_control=continuity_control,
-            comfyui_dir=Path(args.comfyui_dir) if args.comfyui_dir else None,
+            comfyui_dir=(
+                Path(args.comfyui_dir)
+                if args.comfyui_dir
+                else _resolve_default_comfyui_dir(args.mode, output_dir)
+            ),
             tag_lexicon=tag_lexicon,
             tag_frequencies=tag_frequencies,
             debug=args.debug,
@@ -269,17 +275,27 @@ def _resolve_tag_lexicon(path: str | None) -> Path | None:
     return None
 
 
-def _resolve_output_path(path: str | None, mode: str, timestamp: str) -> Path:
+def _resolve_output_dir(timestamp: str) -> Path:
+    return Path("outputs") / timestamp
+
+
+def _resolve_output_path(path: str | None, mode: str, output_dir: Path) -> Path:
     if path:
         return Path(path)
     if mode == "observe":
-        return Path(f"outputs/next_panel_{timestamp}.json")
-    return Path(f"outputs/next_panel_{timestamp}.json")
+        return output_dir / "next_panel.json"
+    return output_dir / "next_panel.json"
 
 
-def _resolve_observation_path(path: str | None, mode: str, timestamp: str) -> Path:
+def _resolve_observation_path(path: str | None, mode: str, output_dir: Path) -> Path:
     if path:
         return Path(path)
     if mode == "plan":
         raise ValueError("--observation is required when --mode plan is used.")
-    return Path(f"outputs/image_observation_{timestamp}.json")
+    return output_dir / "image_observation.json"
+
+
+def _resolve_default_comfyui_dir(mode: str, output_dir: Path) -> Path | None:
+    if mode == "observe":
+        return None
+    return output_dir / "comfyui_prompts"
